@@ -46,9 +46,6 @@ public class CarControllerTest {
     @Autowired
     private MockMvc mvc;
 
-    @Autowired
-    private JacksonTester<Car> json;
-
     @MockBean
     private CarService carService;
 
@@ -57,6 +54,12 @@ public class CarControllerTest {
 
     @MockBean
     private MapsClient mapsClient;
+
+    private JacksonTester<Car> json;
+
+    public CarControllerTest(JacksonTester<Car> json) {
+        this.json = json;
+    }
 
     /**
      * Creates pre-requisites for testing, such as an example car.
@@ -96,7 +99,12 @@ public class CarControllerTest {
          *   the whole list of vehicles. This should utilize the car from `getCar()`
          *   below (the vehicle will be the first in the list).
          */
-
+         mvc.perform(
+                 get("/car")
+                 .accept(MediaType.APPLICATION_JSON_UTF8)
+         ).andExpect(
+                 status().isOk()
+         );
     }
 
     /**
@@ -109,6 +117,13 @@ public class CarControllerTest {
          * TODO: Add a test to check that the `get` method works by calling
          *   a vehicle by ID. This should utilize the car from `getCar()` below.
          */
+        Car car = getCar();
+        mvc.perform(
+                get("/cars/{id}", car.getId())
+                        .accept(MediaType.APPLICATION_JSON_UTF8)
+        ).andExpect(
+                status().isOk()
+        );
     }
 
     /**
@@ -122,6 +137,12 @@ public class CarControllerTest {
          *   when the `delete` method is called from the Car Controller. This
          *   should utilize the car from `getCar()` below.
          */
+        Car car = getCar();
+        mvc.perform(
+                delete("/cars/{id}", car.getId())
+        ).andExpect(
+                status().isNoContent()
+        );
     }
 
     /**
