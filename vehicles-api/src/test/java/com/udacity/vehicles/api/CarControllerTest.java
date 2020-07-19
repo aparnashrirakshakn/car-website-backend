@@ -4,9 +4,7 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,6 +44,9 @@ public class CarControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private JacksonTester<Car> json;
+
     @MockBean
     private CarService carService;
 
@@ -54,12 +55,6 @@ public class CarControllerTest {
 
     @MockBean
     private MapsClient mapsClient;
-
-    private JacksonTester<Car> json;
-
-    public CarControllerTest(JacksonTester<Car> json) {
-        this.json = json;
-    }
 
     /**
      * Creates pre-requisites for testing, such as an example car.
@@ -100,7 +95,7 @@ public class CarControllerTest {
          *   below (the vehicle will be the first in the list).
          */
          mvc.perform(
-                 get("/car")
+                 get("/cars")
                  .accept(MediaType.APPLICATION_JSON_UTF8)
          ).andExpect(
                  status().isOk()
@@ -126,23 +121,32 @@ public class CarControllerTest {
         );
     }
 
+
+    /**
+     * Tests for successful creation of new car in the system
+     * @throws Exception when car creation fails in the system
+     */
+    @Test
+    public void updateCar() throws Exception {
+        Car car = getCar();
+        car.setPrice("20,000");
+        mvc.perform(
+                put("/cars/{id}", car.getId())
+                        .content(json.write(car).getJson())
+                        .contentType(MediaType.APPLICATION_JSON_UTF8)
+                        .accept(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(status().isOk());
+    }
+
     /**
      * Tests the deletion of a single car by ID.
      * @throws Exception if the delete operation of a vehicle fails
      */
     @Test
     public void deleteCar() throws Exception {
-        /**
-         * TODO: Add a test to check whether a vehicle is appropriately deleted
-         *   when the `delete` method is called from the Car Controller. This
-         *   should utilize the car from `getCar()` below.
-         */
         Car car = getCar();
-        mvc.perform(
-                delete("/cars/{id}", car.getId())
-        ).andExpect(
-                status().isNoContent()
-        );
+        mvc.perform(delete("/cars/{id}", car.getId()))
+                .andExpect(status().isNoContent());
     }
 
     /**
@@ -151,6 +155,7 @@ public class CarControllerTest {
      */
     private Car getCar() {
         Car car = new Car();
+        car.setId(1L);
         car.setLocation(new Location(40.730610, -73.935242));
         Details details = new Details();
         Manufacturer manufacturer = new Manufacturer(101, "Chevrolet");
